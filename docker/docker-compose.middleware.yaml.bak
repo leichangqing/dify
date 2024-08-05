@@ -1,5 +1,9 @@
-services:
+x-shared-env: &shared-api-worker-env
+  CONSOLE_API_URL: ${CONSOLE_API_URL:-}
+  SENTRY_DSN: ${API_SENTRY_DSN:-}
+  APP_WEB_URL: ${APP_WEB_URL:-}
 
+services:
   # Frontend web application.
   web:
     image: langgenius/dify-web:0.6.15
@@ -8,9 +12,7 @@ services:
       CONSOLE_API_URL: ${CONSOLE_API_URL:-}
       APP_API_URL: ${APP_API_URL:-}
       SENTRY_DSN: ${WEB_SENTRY_DSN:-}
-    ports:
-      - "3000:3000"
-      
+
   # The postgres database.
   db:
     image: postgres:15-alpine
@@ -59,7 +61,7 @@ services:
       - ./volumes/sandbox/dependencies:/dependencies
     networks:
       - ssrf_proxy_network
-    #user: 501:20
+    user: 501:20
 
   # ssrf_proxy server
   # for more information, please refer to
