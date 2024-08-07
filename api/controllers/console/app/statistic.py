@@ -30,12 +30,17 @@ class DailyConversationStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
+        #sql_query = '''
+        # SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, count(distinct messages.conversation_id) AS conversation_count
+        #     FROM messages where app_id = :app_id
+        # '''
+        ## changed to mysql
         sql_query = '''
-        SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, count(distinct messages.conversation_id) AS conversation_count
+        SELECT date(created_at) AS date, count(distinct messages.conversation_id) AS conversation_count
             FROM messages where app_id = :app_id 
         '''
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
 
+        arg_dict = {'app_id': app_model.id}
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc
 
@@ -90,11 +95,15 @@ class DailyTerminalsStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
+        # sql_query = '''
+        #         SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, count(distinct messages.from_end_user_id) AS terminal_count
+        #             FROM messages where app_id = :app_id
+        #         '''
         sql_query = '''
-                SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, count(distinct messages.from_end_user_id) AS terminal_count
+                SELECT date(created_at) AS date, count(distinct messages.from_end_user_id) AS terminal_count
                     FROM messages where app_id = :app_id 
                 '''
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
+        arg_dict = {'app_id': app_model.id}
 
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc
@@ -149,13 +158,19 @@ class DailyTokenCostStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
+        # sql_query = '''
+        #         SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+        #             (sum(messages.message_tokens) + sum(messages.answer_tokens)) as token_count,
+        #             sum(total_price) as total_price
+        #             FROM messages where app_id = :app_id
+        #         '''
         sql_query = '''
-                SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, 
+                SELECT date(created_at) AS date, 
                     (sum(messages.message_tokens) + sum(messages.answer_tokens)) as token_count,
                     sum(total_price) as total_price
                     FROM messages where app_id = :app_id 
                 '''
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
+        arg_dict = {'app_id': app_model.id}
 
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc
@@ -212,13 +227,19 @@ class AverageSessionInteractionStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
-        sql_query = """SELECT date(DATE_TRUNC('day', c.created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, 
-AVG(subquery.message_count) AS interactions
-FROM (SELECT m.conversation_id, COUNT(m.id) AS message_count
-    FROM conversations c
-    JOIN messages m ON c.id = m.conversation_id
-    WHERE c.override_model_configs IS NULL AND c.app_id = :app_id"""
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
+#         sql_query = """SELECT date(DATE_TRUNC('day', c.created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+# AVG(subquery.message_count) AS interactions
+# FROM (SELECT m.conversation_id, COUNT(m.id) AS message_count
+#     FROM conversations c
+#     JOIN messages m ON c.id = m.conversation_id
+#     WHERE c.override_model_configs IS NULL AND c.app_id = :app_id"""
+        sql_query = """SELECT date(created_at) AS date,
+        AVG(subquery.message_count) AS interactions
+        FROM (SELECT m.conversation_id, COUNT(m.id) AS message_count
+            FROM conversations c
+            JOIN messages m ON c.id = m.conversation_id
+            WHERE c.override_model_configs IS NULL AND c.app_id = :app_id"""
+        arg_dict = {'app_id': app_model.id}
 
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc
@@ -277,14 +298,21 @@ class UserSatisfactionRateStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
+        # sql_query = '''
+        #                 SELECT date(DATE_TRUNC('day', m.created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+        #                     COUNT(m.id) as message_count, COUNT(mf.id) as feedback_count
+        #                     FROM messages m
+        #                     LEFT JOIN message_feedbacks mf on mf.message_id=m.id and mf.rating='like'
+        #                     WHERE m.app_id = :app_id
+        #                 '''
         sql_query = '''
-                        SELECT date(DATE_TRUNC('day', m.created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, 
+                        SELECT date(m.created_at) AS date,
                             COUNT(m.id) as message_count, COUNT(mf.id) as feedback_count 
                             FROM messages m
-                            LEFT JOIN message_feedbacks mf on mf.message_id=m.id and mf.rating='like'
+                            LEFT JOIN message_feedbacks mf on mf.message_id=m.id
                             WHERE m.app_id = :app_id 
                         '''
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
+        arg_dict = {'app_id': app_model.id}
 
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc
@@ -339,13 +367,19 @@ class AverageResponseTimeStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
+        # sql_query = '''
+        #         SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+        #             AVG(provider_response_latency) as latency
+        #             FROM messages
+        #             WHERE app_id = :app_id
+        #         '''
         sql_query = '''
-                SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, 
+                SELECT date(created_at) AS date, 
                     AVG(provider_response_latency) as latency
                     FROM messages
                     WHERE app_id = :app_id
                 '''
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
+        arg_dict = {'app_id': app_model.id}
 
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc
@@ -400,14 +434,21 @@ class TokensPerSecondStatistic(Resource):
         parser.add_argument('end', type=datetime_string('%Y-%m-%d %H:%M'), location='args')
         args = parser.parse_args()
 
-        sql_query = '''SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date, 
-    CASE 
-        WHEN SUM(provider_response_latency) = 0 THEN 0
-        ELSE (SUM(answer_tokens) / SUM(provider_response_latency))
-    END as tokens_per_second
-FROM messages
-WHERE app_id = :app_id'''
-        arg_dict = {'tz': account.timezone, 'app_id': app_model.id}
+#         sql_query = '''SELECT date(DATE_TRUNC('day', created_at AT TIME ZONE 'UTC' AT TIME ZONE :tz )) AS date,
+#     CASE
+#         WHEN SUM(provider_response_latency) = 0 THEN 0
+#         ELSE (SUM(answer_tokens) / SUM(provider_response_latency))
+#     END as tokens_per_second
+# FROM messages
+# WHERE app_id = :app_id'''
+        sql_query = '''SELECT date(created_at) AS date, 
+            CASE 
+                WHEN SUM(provider_response_latency) = 0 THEN 0
+                ELSE (SUM(answer_tokens) / SUM(provider_response_latency))
+            END as tokens_per_second
+        FROM messages
+        WHERE app_id = :app_id'''
+        arg_dict = {'app_id': app_model.id}
 
         timezone = pytz.timezone(account.timezone)
         utc_timezone = pytz.utc

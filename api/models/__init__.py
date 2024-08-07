@@ -56,11 +56,15 @@ class StringUUID(TypeDecorator):
             return value
         elif dialect.name == 'postgresql':
             return str(value)
+        elif dialect.name == 'mysql':
+            return str(value)
         else:
             return value.hex
 
     def load_dialect_impl(self, dialect):
         if dialect.name == 'postgresql':
+            return dialect.type_descriptor(UUID())
+        elif dialect.name == 'mysql':
             return dialect.type_descriptor(UUID())
         else:
             return dialect.type_descriptor(CHAR(36))

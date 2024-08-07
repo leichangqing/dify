@@ -67,7 +67,7 @@ class DatabaseConfig:
 
     DB_USERNAME: str = Field(
         description='db username',
-        default='postgres',
+        default='dify',
     )
 
     DB_PASSWORD: str = Field(
@@ -92,7 +92,7 @@ class DatabaseConfig:
 
     SQLALCHEMY_DATABASE_URI_SCHEME: str = Field(
         description='db uri scheme',
-        default='postgresql',
+        default='mysql',
     )
 
     @computed_field
@@ -141,7 +141,8 @@ class DatabaseConfig:
             'max_overflow': self.SQLALCHEMY_MAX_OVERFLOW,
             'pool_recycle': self.SQLALCHEMY_POOL_RECYCLE,
             'pool_pre_ping': self.SQLALCHEMY_POOL_PRE_PING,
-            'connect_args': {'options': '-c timezone=UTC'},
+            #'connect_args': {'options': '-c timezone=UTC'},
+            'connect_args': {},
         }
 
 

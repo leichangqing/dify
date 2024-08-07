@@ -30,7 +30,7 @@ def upgrade():
                existing_type=sa.VARCHAR(length=40),
                type_=sa.String(length=255),
                existing_nullable=False,
-               existing_server_default=sa.text("'text-embedding-ada-002'::character varying"))
+               existing_server_default=sa.text("'text-embedding-ada-002'"))
 
     # ### end Alembic commands ###
 
@@ -42,7 +42,7 @@ def downgrade():
                existing_type=sa.String(length=255),
                type_=sa.VARCHAR(length=40),
                existing_nullable=False,
-               existing_server_default=sa.text("'text-embedding-ada-002'::character varying"))
+               existing_server_default=sa.text("'text-embedding-ada-002'"))
 
     with op.batch_alter_table('dataset_collection_bindings', schema=None) as batch_op:
         batch_op.alter_column('model_name',

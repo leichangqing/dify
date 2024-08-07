@@ -8,7 +8,7 @@ import pickle
 import re
 import time
 from json import JSONDecodeError
-
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -16,10 +16,10 @@ from configs import dify_config
 from core.rag.retrieval.retrival_methods import RetrievalMethod
 from extensions.ext_database import db
 from extensions.ext_storage import storage
-from models import StringUUID
+import uuid
 from models.account import Account
 from models.model import App, Tag, TagBinding, UploadFile
-
+from models import StringUUID
 
 class Dataset(db.Model):
     __tablename__ = 'datasets'
@@ -31,7 +31,7 @@ class Dataset(db.Model):
 
     INDEXING_TECHNIQUE_LIST = ['high_quality', 'economy', None]
 
-    id = db.Column(StringUUID, server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     tenant_id = db.Column(StringUUID, nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -155,8 +155,7 @@ class DatasetProcessRule(db.Model):
         db.Index('dataset_process_rule_dataset_id_idx', 'dataset_id'),
     )
 
-    id = db.Column(StringUUID, nullable=False,
-                   server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     dataset_id = db.Column(StringUUID, nullable=False)
     mode = db.Column(db.String(255), nullable=False,
                      server_default=db.text("'automatic'::character varying"))
@@ -207,8 +206,7 @@ class Document(db.Model):
     )
 
     # initial fields
-    id = db.Column(StringUUID, nullable=False,
-                   server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     tenant_id = db.Column(StringUUID, nullable=False)
     dataset_id = db.Column(StringUUID, nullable=False)
     position = db.Column(db.Integer, nullable=False)
@@ -461,8 +459,7 @@ class DocumentSegment(db.Model):
     )
 
     # initial fields
-    id = db.Column(StringUUID, nullable=False,
-                   server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     tenant_id = db.Column(StringUUID, nullable=False)
     dataset_id = db.Column(StringUUID, nullable=False)
     document_id = db.Column(StringUUID, nullable=False)
@@ -553,7 +550,7 @@ class AppDatasetJoin(db.Model):
         db.Index('app_dataset_join_app_dataset_idx', 'dataset_id', 'app_id'),
     )
 
-    id = db.Column(StringUUID, primary_key=True, nullable=False, server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     app_id = db.Column(StringUUID, nullable=False)
     dataset_id = db.Column(StringUUID, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
@@ -570,7 +567,7 @@ class DatasetQuery(db.Model):
         db.Index('dataset_query_dataset_id_idx', 'dataset_id'),
     )
 
-    id = db.Column(StringUUID, primary_key=True, nullable=False, server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     dataset_id = db.Column(StringUUID, nullable=False)
     content = db.Column(db.Text, nullable=False)
     source = db.Column(db.String(255), nullable=False)
@@ -587,7 +584,7 @@ class DatasetKeywordTable(db.Model):
         db.Index('dataset_keyword_table_dataset_id_idx', 'dataset_id'),
     )
 
-    id = db.Column(StringUUID, primary_key=True, server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     dataset_id = db.Column(StringUUID, nullable=False, unique=True)
     keyword_table = db.Column(db.Text, nullable=False)
     data_source_type = db.Column(db.String(255), nullable=False,
@@ -634,20 +631,20 @@ class Embedding(db.Model):
         db.Index('created_at_idx', 'created_at')
     )
 
-    id = db.Column(StringUUID, primary_key=True, server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     model_name = db.Column(db.String(255), nullable=False,
                            server_default=db.text("'text-embedding-ada-002'::character varying"))
     hash = db.Column(db.String(64), nullable=False)
-    embedding = db.Column(db.LargeBinary, nullable=False)
+    embedding = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.text('CURRENT_TIMESTAMP(0)'))
     provider_name = db.Column(db.String(255), nullable=False,
                               server_default=db.text("''::character varying"))
 
     def set_embedding(self, embedding_data: list[float]):
-        self.embedding = pickle.dumps(embedding_data, protocol=pickle.HIGHEST_PROTOCOL)
-
+        # self.embedding = pickle.dumps(embedding_data, protocol=pickle.HIGHEST_PROTOCOL)
+        self.embedding = json.dumps(embedding_data)
     def get_embedding(self) -> list[float]:
-        return pickle.loads(self.embedding)
+        return json.dumps(self.embedding)
 
 
 class DatasetCollectionBinding(db.Model):
@@ -658,7 +655,7 @@ class DatasetCollectionBinding(db.Model):
 
     )
 
-    id = db.Column(StringUUID, primary_key=True, server_default=db.text('uuid_generate_v4()'))
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     provider_name = db.Column(db.String(40), nullable=False)
     model_name = db.Column(db.String(255), nullable=False)
     type = db.Column(db.String(40), server_default=db.text("'dataset'::character varying"), nullable=False)
@@ -675,7 +672,7 @@ class DatasetPermission(db.Model):
         db.Index('idx_dataset_permissions_tenant_id', 'tenant_id')
     )
 
-    id = db.Column(StringUUID, server_default=db.text('uuid_generate_v4()'), primary_key=True)
+    id = db.Column(StringUUID, primary_key=True, default=lambda: uuid.uuid4())
     dataset_id = db.Column(StringUUID, nullable=False)
     account_id = db.Column(StringUUID, nullable=False)
     tenant_id = db.Column(StringUUID, nullable=False)
