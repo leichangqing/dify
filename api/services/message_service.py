@@ -34,13 +34,13 @@ class MessageService:
 
         if not conversation_id:
             return InfiniteScrollPagination(data=[], limit=limit, has_more=False)
-
+        ## 读出会话历史记录
         conversation = ConversationService.get_conversation(
             app_model=app_model,
             user=user,
             conversation_id=conversation_id
         )
-
+        ## 读出会话的所有消息,有条数限制
         if first_id:
             first_message = db.session.query(Message) \
                 .filter(Message.conversation_id == conversation.id, Message.id == first_id).first()

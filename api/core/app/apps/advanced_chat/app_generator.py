@@ -249,8 +249,8 @@ class AdvancedChatAppGenerator(MessageBasedAppGenerator):
             response=response,
             invoke_from=invoke_from
         )
-
     def _generate_worker(self, flask_app: Flask,
+
                          application_generate_entity: AdvancedChatAppGenerateEntity,
                          queue_manager: AppQueueManager,
                          conversation_id: str,
