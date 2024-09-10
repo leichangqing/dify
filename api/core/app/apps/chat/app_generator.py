@@ -1,3 +1,4 @@
+from time import sleep
 import logging
 import os
 import threading
@@ -163,6 +164,8 @@ class ChatAppGenerator(MessageBasedAppGenerator):
         worker_thread.start()
 
         # return response or stream generator
+        # sleep(3600) ##LEICQ
+        worker_thread.join() ##LEICQ
         response = self._handle_response(
             application_generate_entity=application_generate_entity,
             queue_manager=queue_manager,

@@ -65,6 +65,7 @@ class WorkflowRunApi(Resource):
         """
         Run workflow
         """
+        logging.log("debug", "run workflow run")
         app_mode = AppMode.value_of(app_model.mode)
         if app_mode != AppMode.WORKFLOW:
             raise NotWorkflowAppError()
